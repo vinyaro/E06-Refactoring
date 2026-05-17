@@ -3,30 +3,18 @@ import java.util.List;
 
 public class Conta {
 
-    // TODO(#1) REFATORAR: Esses dados deveriam ficar em outro lugar
-    private String nomeCliente;
-    private String cpfCliente;
-    private String telefoneCliente;
+    // Composição com as classes que eu extraí
+    private Cliente cliente;
+    private Agencia agencia;
 
-    // TODO(#1) REFATORAR: Esses dados deveriam ficar em outro lugar
-    private int numAgencia;
-    private int numConta;
-    private String gerente;
-
-    // TODO(#2) REFATORAR: Esse nome não é o ideal para representar o saldo da conta
-    private double valor;
-
+    // Field renomeado de 'valor' para 'saldo'
+    private double saldo;
     private List<Operacao> operacoes;
 
     public Conta(String nomeCliente, String cpfCliente, String telefoneCliente, int numAgencia, int numConta, String gerente, double valor) {
-        this.nomeCliente = nomeCliente;
-        this.cpfCliente = cpfCliente;
-        this.telefoneCliente = telefoneCliente;
-        this.numAgencia = numAgencia;
-        this.numConta = numConta;
-        this.gerente = gerente;
-        this.valor = valor;
-
+        this.cliente = new Cliente(nomeCliente, cpfCliente, telefoneCliente);
+        this.agencia = new Agencia(numAgencia, numConta, gerente);
+        this.saldo = valor;
         this.operacoes = new ArrayList<>();
     }
 
@@ -34,40 +22,47 @@ public class Conta {
         this(null, null, null, 0, 0, null, 0);
     }
 
-    // TODO(#3) REFATORAR: Muita responsabilidade para o mesmo método
+    // Método simplificado usando polimorfismo e extração de método
     public void realizarOperacao(char tipo, int valor) {
-        Operacao op = new Operacao(tipo, valor);
-        this.operacoes.add(op);
-
-        if (tipo == 'd')
-            this.valor += valor;
-        else if(tipo == 's')
-            this.valor -= valor;
+        Operacao op = criarOperacao(tipo, valor);
+        if (op != null) {
+            this.operacoes.add(op);
+            this.atualizarSaldo(tipo, valor);
+        }
     }
 
-    public String toString() {
-        // TODO(#4) REFATORAR: Esses dados não estão relacionados a conta
-        String dadosCliente = String.format("CPF: %s\nNome: %s\nTelefone: %s",
-                this.cpfCliente, this.nomeCliente, this.telefoneCliente);
+    // Fábrica interna simples para instanciar as subclasses corretas
+    private Operacao criarOperacao(char tipo, int valor) {
+        if (tipo == 'd') return new Deposito(valor);
+        if (tipo == 's') return new Saque(valor);
+        return null;
+    }
 
-        // TODO(#4) REFATORAR: Esses dados não estão relacinados a conta
-        String dadosConta = String.format("Ag.: %d\nConta: %d\nGerente: %s\nSaldo: %.2f",
-                this.numAgencia, this.numConta, this.gerente, this.valor);
-
-        // TODO(#5) REFATORAR: Essa operação não deveria estar sendo realizada neste método
-        String dadosExtrato = "";
-        for(Operacao op : this.operacoes) {
-            dadosExtrato += op.toString() + "\n";
+    // Método extraído para isolar a atualização do saldo bancário
+    private void atualizarSaldo(char tipo, int valor) {
+        if (tipo == 'd') {
+            this.saldo += valor;
+        } else if (tipo == 's') {
+            this.saldo -= valor;
         }
+    }
 
-        return "-----CLIENTE-----\n" +
-                dadosCliente +
-                "\n\n" +
-                "-----CONTA-----\n" +
-                dadosConta +
-                "\n\n" +
-                "-----EXTRATO-----\n" +
-                dadosExtrato +
-                "\n";
+    // Método extraído para isolar a montagem textual do extrato
+    public String gerarExtrato() {
+        StringBuilder dadosExtrato = new StringBuilder();
+        for (Operacao op : this.operacoes) {
+            dadosExtrato.append(op.toString()).append("\n");
+        }
+        return dadosExtrato.toString();
+    }
+
+    @Override
+    public String toString() {
+        // Delegação de formatação para as classes responsáveis
+        String dadosClienteStr = this.cliente.toString();
+        String dadosContaStr = this.agencia.toString() + String.format("\nSaldo: %.2f", this.saldo);
+        String dadosExtratoStr = this.gerarExtrato();
+
+        return dadosClienteStr + "\n\n" + dadosContaStr + "\n\n" + dadosExtratoStr;
     }
 }

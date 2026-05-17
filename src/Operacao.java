@@ -1,25 +1,17 @@
-public class Operacao {
-
-    private char tipo;
+public abstract class Operacao {
     private double valor;
 
-    public Operacao(char tipo, double valor) {
-        this.tipo = tipo;
+    public Operacao(double valor) {
         this.valor = valor;
     }
 
-    // TODO(#6) REFATORAR: Muita responsabilidade para mesma classe
-    public String getTipo() {
-        switch (this.tipo) {
-            case 'd':
-                return "Depósito";
-            case 's':
-                return "Saque";
-            default:
-                return null;
-        }
+    public double getValor() {
+        return this.valor;
     }
 
+    public abstract String getTipo();
+
+    @Override
     public String toString() {
         return this.getTipo() + ":\t" + this.valor;
     }
